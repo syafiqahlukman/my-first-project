@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    button {
+      margin: 5px;
+    }
+    input, textarea {
+      display: block;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Item Management</h1>
+  <div>
+    <h2>Add Item</h2>
+    <input type="text" id="itemName" placeholder="Item Name">
+    <textarea id="itemDescription" placeholder="Item Description"></textarea>
+    <button onclick="addItem()">Add Item</button>
+  </div>
+  <div>
+    <h2>Items List</h2>
+    <ul id="itemsList"></ul>
+  </div>
+  <script>
+    const apiUrl = 'http://localhost:3000/items';
+
+    async function fetchItems() {
+      const response = await fetch(apiUrl);
+      const items = await response.json();
+      const itemsList = document.getElementById('itemsList');
+      itemsList.innerHTML = '';
+      items.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+          <strong>${item.name}</strong>: ${item.description}
+          <button onclick="editItem('${item._id}')">Edit</button>
+          <button onclick="deleteItem('${item._id}')">Delete</button>
+        `;
+        itemsList.appendChild(listItem);
+      });
+    }
+
+    async function addItem() {
+      const name = document.getElementById('itemName').value;
+      const description = document.getElementById('itemDescription').value;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, description })
+      });
+      if (response.ok) {
+        fetchItems();
+      }
+    }
+
+    async function editItem(id) {
+      const name = prompt('Enter new name:');
+      const description = prompt('Enter new description:');
+      const response = await fetch(`${apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, description })
+      });
+      if (response.ok) {
+        fetchItems();
+      }
+    }
+
+    async function deleteItem(id) {
+      const response = await fetch(`${apiUrl}/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        fetchItems();
+      }
+    }
+
+    fetchItems();
+  </script>
+</body>
+</html>
