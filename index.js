@@ -2,12 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
-const port = 3000;
 
 const app = express();
 app.use(bodyParser.json());
 
-mongoose.connect('mongodb://localhost:27017/mydatabase', {
+const port = process.env.PORT || 3000;
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase';
+
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
