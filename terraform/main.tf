@@ -105,23 +105,4 @@ resource "aws_instance" "my_server" {
   tags = {
     Name = "${var.project_name}-server"
   }
-
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"  
-    private_key = file("/home/syafiqah/Downloads/syafiqah-key.pem")  # Update with the path to your private key
-    host        = self.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install -y nginx docker.io",
-      "sudo systemctl start nginx",
-      "sudo systemctl enable nginx",
-      "sudo systemctl start docker",
-      "sudo systemctl enable docker",
-      "sudo docker run -d -p 8080:80 --name my-nginx-container -v /var/www/html:/usr/share/nginx/html nginx"
-    ]
-  }
 }
