@@ -22,7 +22,7 @@
 
     - name: Copy authorized_keys for ansibleuser1
       copy:
-        src: /home/ubuntu/.ssh/authorized_keys
+        src: /home/syafiqah/.ssh/authorized_keys
         dest: /home/ansibleuser1/.ssh/authorized_keys
         owner: ansibleuser1
         group: ansibleuser1
@@ -102,7 +102,7 @@
         name: mongo
         source: pull
 
-    - name: Pull your application Docker image
+    - name: Pull application Docker image
       docker_image:
         name: syafiqahlukman/test
         source: pull
