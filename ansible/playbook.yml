@@ -1,0 +1,129 @@
+---
+- name: Initial setup as ubuntu user
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+
+  tasks:
+    - name: Create ansibleuser1
+      user:
+        name: ansibleuser1
+        state: present
+        groups: sudo
+        append: yes
+
+    - name: Create .ssh directory for ansibleuser1
+      file:
+        path: /home/ansibleuser1/.ssh
+        state: directory
+        owner: ansibleuser1
+        group: ansibleuser1
+        mode: '0700'
+
+    - name: Copy authorized_keys for ansibleuser1
+      copy:
+        src: /home/ubuntu/.ssh/authorized_keys
+        dest: /home/ansibleuser1/.ssh/authorized_keys
+        owner: ansibleuser1
+        group: ansibleuser1
+        mode: '0600'
+
+    - name: Reset SSH connection to allow user changes to affect 'current login user'
+      ansible.builtin.meta: reset_connection
+
+- name: Setup Docker and Nginx as ansibleuser1
+  hosts: all
+  become: yes
+  remote_user: ansibleuser1
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies for Docker
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+
+    - name: Add GPG key for Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add docker repository to apt
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install docker
+      apt:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+
+    - name: Change file ownership, group, and permissions
+      ansible.builtin.file:
+        path: /usr/local/bin/docker-compose
+        owner: ansibleuser1
+        group: ansibleuser1
+
+    - name: Verify Docker Compose installation
+      command: docker-compose --version
+
+    - name: Pull Nginx Docker image
+      docker_image:
+        name: nginx
+        source: pull
+
+    - name: Pull MongoDB Docker image
+      docker_image:
+        name: mongo
+        source: pull
+
+    - name: Pull your application Docker image
+      docker_image:
+        name: syafiqahlukman/test
+        source: pull
+
+    - name: Create docker directory for ansibleuser1
+      file:
+        path: /home/ansibleuser1/docker
+        state: directory
+        owner: ansibleuser1
+        group: ansibleuser1
+        mode: '0755'
+
+    - name: Copy docker-compose.yml to the server
+      copy:
+        src: /home/syafiqah/my-first-project/ansible/docker-compose.yml
+        dest: /home/ansibleuser1/docker/docker-compose.yml
+        owner: ansibleuser1
+        group: ansibleuser1
+        mode: '0644'
+
+    - name: Run Docker Compose
+      command: docker-compose up -d
+      args:
+        chdir: /home/ansibleuser1/docker
