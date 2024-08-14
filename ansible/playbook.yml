@@ -89,6 +89,17 @@
         owner: ansibleuser1
         group: ansibleuser1
 
+    - name: Add ansibleuser1 to the docker group
+      user:
+        name: ansibleuser1
+        groups: docker
+        append: yes
+
+    - name: Restart Docker service to apply group changes
+      systemd:
+        name: docker
+        state: restarted
+
     - name: Verify Docker Compose installation
       command: docker-compose --version
 
