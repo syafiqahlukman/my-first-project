@@ -5,17 +5,25 @@ services:
     environment:
       MONGO_URI: mongodb://db:27017/mydatabase
     image: syafiqahlukman/test:latest
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - published: 8080
         target: 8080
 
-  mongo:
+  db:
     image: mongo:latest
     ports:
       - published: 27017
         target: 27017
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   nginx:
     depends_on:
